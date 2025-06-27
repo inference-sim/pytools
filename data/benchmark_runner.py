@@ -13,12 +13,13 @@ from pathlib import Path
 from datetime import datetime
 import json
 
+
 def load_config(config_file):
     """Load YAML configuration file"""
     with open(config_file, 'r') as f:
         return yaml.safe_load(f)
 
-def start_vllm_server(config):
+def start_vllm_server(config, run):
     """Start vLLM server with config parameters"""
     model = config['model']
     vllm_params = config['vllm']
@@ -42,7 +43,7 @@ def start_vllm_server(config):
         
     print(f"Starting vLLM server: {' '.join(cmd)}")
 
-    with open('vllm_server.log', 'w') as log_file:
+    with open(f'vllm_server_{run}.log', 'w') as log_file:
         # Redirect stdout and stderr to log file
         process = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT)
 
@@ -124,11 +125,12 @@ def stop_vllm_server(process):
 
 def save_results(outputs, config, config_file, output_folder):
     """Save all benchmark outputs to file"""
-    config_name = Path(config_file).stem
+    benchmark_params = config['benchmark']
+
+    config_name = f"{config['name']}_{benchmark_params['request_rate']}_{benchmark_params['num_prompts']}_{benchmark_params['temperature']}"
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = Path(output_folder) / f"{config_name}_{timestamp}.txt"
     
-    benchmark_params = config['benchmark']
     
     with open(output_file, 'w') as f:
         f.write(f"Benchmark Results: {config['name']}\n")
@@ -165,17 +167,19 @@ def main():
     config = config['test']
     
     outputs = []
+    curr_run = 1
     
     for benchmark, params in config.items():
         runs = params['runs']
         for run in range(1, runs + 1):
+
             print(f"\n{'='*50}")
             print(f"STARTING RUN {run}/{params['runs']} for benchmark: {benchmark}")
             print(f"{'='*50}")
             
             # Start server
-            server_process = start_vllm_server(params)
-            
+            server_process = start_vllm_server(params, curr_run)
+            curr_run += 1
             try:
                 # Wait for server
                 if not wait_for_server():
