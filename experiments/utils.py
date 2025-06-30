@@ -40,7 +40,7 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
             else:
                 # Prefill (anything > 1)
                 num_prefills += 1
-                sum_prefill_tokens += value**2
+                sum_prefill_tokens += value
                 max_prefill_tokens = max(max_prefill_tokens, value)
         
         return pd.Series({
@@ -48,11 +48,29 @@ def format_data(df: pd.DataFrame) -> pd.DataFrame:
             'num_prefills': num_prefills,
             'sum_decode_tokens': sum_decode_tokens,
             'sum_prefill_tokens': sum_prefill_tokens,
-            'max_prefill_tokens': max_prefill_tokens**2
+            'max_prefill_tokens': max_prefill_tokens
+        })
+    
+    def parse_cached_tokens(scheduled_new_reqs: str):
+        reqs = scheduled_new_reqs.split('lora_request')
+        total_cached = 0
+        max_cached_tokens = 0
+        for i in range(len(reqs) - 1):
+            cached = int(reqs[i].split(',')[-2].split('=')[-1])
+            total_cached += cached
+            max_cached_tokens = max(max_cached_tokens, cached)
+
+        return pd.Series({
+            'sum_cached_prefill_tokens': total_cached,
+            'max_cached_prefill_tokens': max_cached_tokens
         })
 
-    df[['num_decodes', 'num_prefills', 'sum_decode_tokens', 'sum_prefill_tokens', 'max_prefill_tokens']] = df['num_scheduled_tokens'].apply(process_tokens)
+    df[['sum_cached_prefill_tokens', 'max_cached_prefill_tokens']] = df['scheduled_new_reqs'].apply(parse_cached_tokens)
 
+    df[['num_decodes', 'num_prefills', 'sum_decode_tokens', 'sum_uncached_prefill_tokens', 'max_uncached_prefill_tokens']] = df['num_scheduled_tokens'].apply(process_tokens)
+
+    df['sum_prefill_tokens'] = df['sum_uncached_prefill_tokens'] + df['sum_cached_prefill_tokens']
+    df['max_prefill_tokens'] = df['max_uncached_prefill_tokens'] + df['max_cached_prefill_tokens']
 
     df.drop(columns=['num_scheduled_tokens', 'num_decodes', 'distribution', 'dataset', 'model','scheduled_new_reqs', 'block_size', 'gpu_memory_utilization', 'num_gpu_blocks', 'enable_prefix_caching', 'max_num_sequences', 'max_model_len', 'temperature'], inplace=True) # Num_decodes is the same sum_decode_tokens, so we can drop it
 
