@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Script to generate vLLM benchmark YAML configurations by sweeping over parameters.
 """
