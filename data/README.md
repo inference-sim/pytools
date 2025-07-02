@@ -29,32 +29,36 @@ python benchmark_runner.py config.yaml --output ./my_results
 Config example
 
 ```yaml
+# Generated test configurations
 test:
+
   baseline:
-    name: "basic_benchmark"
-    description: "Basic vLLM performance test"
-    model: "Qwen/Qwen2.5-0.5B"
+    name: exp_1000p_25r_0.0t_sharegpt
+    description: Basic vLLM performance test
+    model: Qwen/Qwen2.5-0.5B
     runs: 1
 
     # vLLM server parameters
     vllm:
-      gpu_memory_utilization: 0.4
+      gpu_memory_utilization: 0.9
       enable_prefix_caching: true
-      disable_log_requests: true
+      disable_log_requests: false
       block_size: 16
       max_model_len: 2048
       max_num_batched_tokens: 2048
       max_num_seqs: 256
       long_prefill_token_threshold: 1000000
+      seed: 42
 
     # Benchmark parameters
     benchmark:
-      backend: "vllm"
-      dataset_name: "sharegpt"
-      dataset_path: "ShareGPT_V3_unfiltered_cleaned_split.json"
-      num_prompts: 5000
-      request_rate: 50
+      backend: vllm
+      dataset_name: sharegpt
+      dataset_path: ShareGPT_V3_unfiltered_cleaned_split.json
+      num_prompts: 1000
+      request_rate: 25
       temperature: 0.0
+      seed: 42
 ```
 
 ## Tests Available
