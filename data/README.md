@@ -23,7 +23,7 @@ cp /path/to/config.yaml .
 
 Specify output folder:
 ```bash
-python benchmark_runner.py config.yaml --runs 2 --output ./my_results
+python benchmark_runner.py config.yaml --output ./my_results
 ```
 
 Config example
