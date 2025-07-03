@@ -1,44 +1,77 @@
-**How are we collecting data?**
+# Experiments
 
-Currently logging data from `core.py` for getting data on per-step basis. Very neccesary for prediciting model times, etc.
+This folder contains all experimental work for the vLLM simulator project. Each experiment is documented to ensure reproducibility and knowledge sharing.
 
-```python
-if self.num_requests_added > 0:
-            self.executions_stats = pd.concat(
-                [self.executions_stats,
-                pd.DataFrame({
-                    "num_scheduled_tokens": [scheduler_output.num_scheduled_tokens],
-                    "num_total_scheduled_tokens": [scheduler_output.total_num_scheduled_tokens],
-                    "scheduled_new_reqs": [scheduler_output.scheduled_new_reqs],
-                    "execute_time": [execute_time],
-                    "scheduler_time": [scheduler_time],
-                        "update_time": [update_time],
-                        "model": [self.vllm_config.model_config.model],
-                        "block_size": [self.vllm_config.cache_config.block_size],
-                        "gpu_memory_utilization": [self.vllm_config.cache_config.gpu_memory_utilization],
-                        "num_gpu_blocks": [self.vllm_config.cache_config.num_gpu_blocks],
-                        "enable_prefix_caching": [self.vllm_config.cache_config.enable_prefix_caching],
-                        "max_num_sequences": [self.vllm_config.scheduler_config.max_num_seqs],
-                        "max_model_len": [self.vllm_config.scheduler_config.max_model_len],
-                        "temperature": [self.temperature],
-                        "arrival_rate": [self.request_rate],
-                        "distribution": [self.distribution],
-                        "dataset": [self.dataset_name]
+## Folder Structure
 
-                })],
-                ignore_index=True)
+```
+data/                            # Shared experimental scripts
+experiments/
+├── README.md                    # This file
+├── experiment_docs/             # Individual experiment documentation
+│   ├── experiment_001_data_collection.md
+│   ├── experiment_002_regression_model.md
+│   └── ...
+├── step_time_analysis.ipynb
+├── predict_model_execute.ipynb
+├── sim_data_analysis.ipynb
+├── utils.py                     # Common helper functions
+└── ...
+ 
 ```
 
-```python
-def shutdown(self):
-        print("Shutting down EngineCore...")
-        # print stats on shutdown
-        # create graphs for prefill and decode running times
+## Purpose
 
-        # create output name based on arrival_rate, temperature, model, and dataset
-        output_name = f"execution_stats_{self.num_requests_added}_{self.request_rate}_{self.temperature}_{self.vllm_config.model_config.model.replace('/','-')}_{self.dataset_name}.csv"
-        print(f"Saving execution stats to {output_name}")
+This experiments folder serves to:
+- Document the research process and findings
+- Ensure all experiments can be reproduced
+- Share knowledge and build upon previous work
+- Validate simulator performance against real vLLM
 
-        self.executions_stats.to_csv(output_name, index=False)
+## Experiment Documentation Template
+
+Each experiment document in `experiment_docs/` follows this structure:
+
+### File Naming
+`exp_XX_brief_description.md`
+
+### Document Structure
+```markdown
+# Experiment XXX: [Title]
+
+**Date**: YYYY-MM-DD
+**Author**: [Name]
+**Status**: [Planned/In Progress/Completed]
+
+## Purpose/Goal
+What this experiment aims to achieve.
+Link to GitHub issues if relevant.
+
+## How to Reproduce
+**Code Changes**: Files modified and key code snippets
+**Configuration**: Config files used, commit references
+**Data Collection**: What data was collected and where it's stored
+**Commands**: Step-by-step commands to reproduce
+
+## Analysis
+**Analysis Performed**: What analysis was done
+**Code/Files**: Reference to notebooks or analysis files used
+
+## Key Takeaways
+**Findings**: Main discoveries and quantitative results
+**Implications**: What these results mean for the project
+**Future Work**: Suggested follow-up experiments
 ```
 
+## Getting Started
+
+**For New Experiments**:
+1. Create experiment document in `experiment_docs/`
+2. Implement changes and collect data
+3. Analyze results in dedicated notebooks
+4. Update documentation with findings
+
+**For Reproducing Experiments**:
+1. Read the experiment documentation
+2. Follow the reproduction steps exactly
+3. Compare results with documented findings
