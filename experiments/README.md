@@ -39,7 +39,7 @@ Each experiment document in `experiment_docs/` follows this structure:
 ```markdown
 # Experiment XXX: [Title]
 
-**Date**: YYYY-MM-DD
+**Date**:
 **Author**: [Name]
 **Status**: [Planned/In Progress/Completed]
 
