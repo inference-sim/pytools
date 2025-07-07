@@ -1,4 +1,8 @@
 # profiling data
+
+# python version
+.python-version
+=======
 experiments/profiling/
 
 # Byte-compiled / optimized / DLL files
@@ -195,5 +199,5 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
-.python-version
+
 .DS_Store
