@@ -8,7 +8,8 @@
 
 ## Purpose/Goal
 
-Use blackbox optimization to train model coefficients
+Use blackbox optimization to train model coefficients.
+[Issue](https://github.com/inference-sim/inference-sim/issues/45)
 
 ## How to Reproduce
 
