@@ -19,6 +19,15 @@ cp /path/to/benchmark_runner.py .
 cp /path/to/config.yaml .
 ```
 
+
+3. We use a different version of `benchmark_serving.py` which you can also copy to the vLLM benchmarks directory.
+
+```bash
+
+cp /path/to/pytools/data/benchmark_serving.py
+
+```
+
 ## Usage
 
 Specify output folder:
