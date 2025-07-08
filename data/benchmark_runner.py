@@ -100,6 +100,9 @@ def run_benchmark(config, output_folder, run_number):
     
     if benchmark_params.get('dataset_path'):
         cmd.extend(['--dataset-path', benchmark_params['dataset_path']])
+
+    if benchmark_params['dataset_name'] == "sharegpt" and int(benchmark_params['sharegpt_output_len']) > 0:
+        cmd.extend(['--sharegpt-output-len', str(benchmark_params['sharegpt_output_len'])])
     
     print(f"Running benchmark (run {run_number}): {' '.join(cmd)}")
     
@@ -171,6 +174,7 @@ def main():
     
     for benchmark, params in config.items():
         runs = params['runs']
+        outputs = []
         for run in range(1, runs + 1):
 
             print(f"\n{'='*50}")

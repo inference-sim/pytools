@@ -5,7 +5,8 @@ Script to generate vLLM benchmark YAML configurations by sweeping over parameter
 import yaml
 from itertools import product
 
-def generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list):
+def generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list, 
+                    max_num_batched_tokens_list, long_prefill_token_threshold_list):
     """
     Generate YAML configuration by sweeping over parameter combinations.
     
@@ -25,8 +26,9 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
     exp_counter = 1
     
     # Generate all parameter combinations
-    for num_prompts, request_rate, temperature, dataset in product(
-        num_prompts_list, request_rate_list, temperature_list, datasets_list
+    for num_prompts, request_rate, temperature, dataset, max_num_batched_tokens, long_prefill_token_threshold in product(
+        num_prompts_list, request_rate_list, temperature_list, datasets_list, 
+        max_num_batched_tokens_list, long_prefill_token_threshold_list
     ):
         
         # Generate experiment name based on parameters
@@ -44,9 +46,9 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
                 'disable_log_requests': False,
                 'block_size': 16,
                 'max_model_len': 2048,
-                'max_num_batched_tokens': 2048,
+                'max_num_batched_tokens': max_num_batched_tokens,
                 'max_num_seqs': 256,
-                'long_prefill_token_threshold': 1000000,
+                'long_prefill_token_threshold': long_prefill_token_threshold,
                 'seed': 42
             },
             'benchmark': {
@@ -55,6 +57,7 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
                 'dataset_path': dataset['path'],
                 'num_prompts': num_prompts,
                 'request_rate': request_rate,
+                'sharegpt_output_len': 0,
                 'temperature': temperature,
                 'seed': 42
             }
@@ -69,15 +72,18 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
 
 def main():
     # Define parameter sweep ranges
-    num_prompts_list = [50, 100, 200, 400, 800, 1600, 3200]
-    request_rate_list = [2, 4, 8, 16, 32, 45, 64]
+    num_prompts_list = [400]
+    request_rate_list = [4]
     temperature_list = [0.0]
+    max_num_batched_tokens = [256, 512, 1024, 2048, 4096]
+    long_prefill_token_threshold = [16, 32, 64, 128, 256, 512, 1024]
     datasets_list = [
         {'name': 'sharegpt', 'path': 'ShareGPT_V3_unfiltered_cleaned_split.json'},
     ]
     
     # Generate configuration
-    config = generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list)
+    config = generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list, 
+                             max_num_batched_tokens, long_prefill_token_threshold)
     
     # Write to YAML file
     with open('vllm_benchmark_config.yaml', 'w') as f:
