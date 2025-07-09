@@ -101,7 +101,7 @@ import numpy as np
 from itertools import product
 from typing import Dict, List, Tuple, Optional
 
-def find_matching_experiments(sim_dir: str, vllm_dir: str) -> List[Tuple[str, str, Dict]]:
+def find_matching_experiments(sim_dir: str, vllm_dir: str, sweep_config: Dict) -> List[Tuple[str, str, Dict]]:
     """
     Find matching experiment files between simulation and vLLM directories.
     
@@ -123,12 +123,12 @@ def find_matching_experiments(sim_dir: str, vllm_dir: str) -> List[Tuple[str, st
     matching_pairs = []
     
     # Define search space
-    num_prompts_list = [400]
-    request_rate_list = [32]
-    temperature_list = [0.0]
-    max_num_batched_tokens = [256, 512, 1024, 2048, 4096, 8192]
-    long_prefill_token_threshold = [16, 32, 64, 128, 256, 512, 1024]
-    datasets_list = [{'name': 'sharegpt', 'path': 'ShareGPT_V3_unfiltered_cleaned_split.json'}]
+    num_prompts_list = sweep_config['num_prompts']
+    request_rate_list = sweep_config['request_rate']
+    temperature_list = sweep_config['temperature']
+    max_num_batched_tokens = sweep_config['max_num_batched_tokens']
+    long_prefill_token_threshold = sweep_config['long_prefill_token_threshold']
+    datasets_list = sweep_config['datasets']
     
     # Search for matching files using itertools.product
     for num_prompts, request_rate, temperature, max_tokens, threshold, dataset in product(
@@ -283,7 +283,7 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
             
             errors['ttft_mse'] = mse_ttft
             # errors['ttft_mape'] = mape_ttft
-            errors['ttft_accuracy'] = max(0, 100 - mape_ttft)  # MAPE-based accuracy
+            errors['ttft_accuracy'] = 100 - mape_ttft  # MAPE-based accuracy
     
     # Calculate MSE and MAPE for TPOT
     if sim_results['tpots'] and vllm_results['tpots']:
@@ -299,7 +299,7 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
             
             errors['tpot_mse'] = mse_tpot
             # errors['tpot_mape'] = mape_tpot
-            errors['tpot_accuracy'] = max(0, 100 - mape_tpot)  # MAPE-based accuracy
+            errors['tpot_accuracy'] = 100 - mape_tpot # MAPE-based accuracy
     
     # Calculate MSE and MAPE for E2E
     if sim_results['e2es'] and vllm_results['e2es']:
@@ -320,7 +320,7 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
     # Calculate percent error for duration
     if sim_results['duration'] is not None and vllm_results['duration'] is not None:
         percent_error = abs(sim_results['duration'] - vllm_results['duration']) / vllm_results['duration'] * 100
-        duration_accuracy = max(0, 100 - percent_error)
+        duration_accuracy = 100 - percent_error
         
         # errors['duration_percent_error'] = percent_error
         errors['duration_accuracy'] = duration_accuracy
