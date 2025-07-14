@@ -329,11 +329,16 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
 
 import matplotlib.pyplot as plt
 
-def plot_results(plotting_data, x_axis, y_axis, sweep_configs):
+def plot_results(plotting_data, x_axis, y_axis, sweep_configs, plot_type="line"):
     for metric, data in plotting_data.items():
         plt.figure(figsize=(10, 6))
         for x_value, y_values in data.items():
-            plt.plot(sweep_configs[x_axis], y_values, marker='o', label=f'{y_axis}={x_value}')
+            if plot_type == "bar":
+                plt.bar([str(val) + f'_{x_value}' for val in sweep_configs[x_axis]], y_values, label=f'{y_axis}={x_value}')
+            else:
+                print(sweep_configs[x_axis])
+                print(y_values)
+                plt.plot(sweep_configs[x_axis], y_values, marker='o', label=f'{y_axis}={x_value}')
         
         plt.title(f'{metric} vs {x_axis} and {y_axis}')
         plt.xlabel(x_axis)
