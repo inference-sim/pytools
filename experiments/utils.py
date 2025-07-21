@@ -173,6 +173,9 @@ def parse_sim_results(file_path: str) -> Dict:
     # Extract vLLM estimated duration
     duration_match = re.search(r'vLLM estimated Duration\(s\):\s*([0-9.]+)', content)
     vllm_duration = float(duration_match.group(1)) if duration_match else None
+
+    sim_duration_match = re.search(r'Simulation Duration\(s\):\s*([0-9.]+)', content)
+    sim_duration = float(sim_duration_match.group(1)) if sim_duration_match else None
     
     # Extract TTFTs
     ttft_match = re.search(r'TTFTs\s*:\s*\[(.*?)\]', content, re.DOTALL)
@@ -194,12 +197,62 @@ def parse_sim_results(file_path: str) -> Dict:
     if e2e_match:
         e2e_str = e2e_match.group(1)
         e2es = [float(x.strip(' ,')) for x in e2e_str.split(',') if x.strip(' ,')]
+
+    # Extract mean, media, and p99 for TTFTs, TPOTs
+    # Mean TTFT(ms)     : 68.541
+    # Median TTFT(ms)   : 46.071
+    # P99 TTFT(ms)      : 219.034
+    ttft_mean_match = re.search(r'Mean TTFT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    ttft_mean = float(ttft_mean_match.group(1)) if ttft_mean_match else None
+
+    tpot_mean_match = re.search(r'Mean TPOT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    tpot_mean = float(tpot_mean_match.group(1)) if tpot_mean_match else None
+
+    ttft_median_match = re.search(r'Median TTFT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    ttft_median = float(ttft_median_match.group(1)) if ttft_median_match else None
+
+    tpot_median_match = re.search(r'Median TPOT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    tpot_median = float(tpot_median_match.group(1)) if tpot_median_match else None
+
+    ttft_p99_match = re.search(r'P99 TTFT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    ttft_p99 = float(ttft_p99_match.group(1)) if ttft_p99_match else None
+
+    tpot_p99_match = re.search(r'P99 TPOT\s*\(ms\)\s*:\s*([0-9.]+)', content)
+    tpot_p99 = float(tpot_p99_match.group(1)) if tpot_p99_match else None
+
+    # Request Rate(req/s)  : 4
+    request_rate_match = re.search(r'Request Rate\s*\(req/s\)\s*:\s*([0-9.]+)', content)
+    request_rate = float(request_rate_match.group(1)) if request_rate_match else None
+
+    # Match this 'Request throughput (req/s):  : 3.704'
+    throughput_rate_match = re.search(r'Request throughput\s*\(req/s\):\s*:\s*([0-9.]+)', content)
+    throughput_rate = float(throughput_rate_match.group(1)) if throughput_rate_match else None
+
+    if request_rate is None:
+        print(f"Warning: Request Rate not found in {file_path}. Using throughput rate instead.")
+    
+    if throughput_rate is None:
+        print(f"Warning: Throughput Rate not found in {file_path}. Using request rate instead.")
+
+    saturation_ratio = throughput_rate / request_rate if request_rate and throughput_rate else None
+
+    # Return parsed results
+
     
     return {
         'ttfts': ttfts,
         'tpots': tpots,
         'e2es': e2es,
-        'duration': vllm_duration
+        'duration': vllm_duration,
+        'ttft_mean': ttft_mean,
+        'tpot_mean': tpot_mean,
+        'ttft_median': ttft_median,
+        'tpot_median': tpot_median,
+        'ttft_p99': ttft_p99,
+        'tpot_p99': tpot_p99,
+        'saturation_ratio': saturation_ratio,
+        'sim_duration': sim_duration,
+        'throughput_rate': throughput_rate,
     }
 
 def parse_vllm_results(file_path: str) -> Dict:
@@ -239,12 +292,45 @@ def parse_vllm_results(file_path: str) -> Dict:
     if e2e_match:
         e2e_str = e2e_match.group(1)
         e2es = [float(x.strip(' ,')) for x in e2e_str.split(',') if x.strip(' ,')]
+
+    # Extract mean, median, and p99 for TTFTs, TPOTs
+    ttft_mean_match = re.search(r'Mean TTFT \(ms\):\s*([0-9.]+)', content)
+    ttft_mean = float(ttft_mean_match.group(1)) if ttft_mean_match else None
+
+    tpot_mean_match = re.search(r'Mean TPOT \(ms\):\s*([0-9.]+)', content)
+    tpot_mean = float(tpot_mean_match.group(1)) if tpot_mean_match else None    
+
+    ttft_median_match = re.search(r'Median TTFT \(ms\):\s*([0-9.]+)', content)
+    ttft_median = float(ttft_median_match.group(1)) if ttft_median_match else None
+
+    tpot_median_match = re.search(r'Median TPOT \(ms\):\s*([0-9.]+)', content)
+    tpot_median = float(tpot_median_match.group(1)) if tpot_median_match else None
+
+    ttft_p99_match = re.search(r'P99 TTFT \(ms\):\s*([0-9.]+)', content)
+    ttft_p99 = float(ttft_p99_match.group(1)) if ttft_p99_match else None
+
+    tpot_p99_match = re.search(r'P99 TPOT \(ms\):\s*([0-9.]+)', content)
+    tpot_p99 = float(tpot_p99_match.group(1)) if tpot_p99_match else None
     
+    saturation_ratio_match = re.search(r'Throughput ratio throughput/request_rate:\s*([0-9.]+)', content)
+    saturation_ratio = float(saturation_ratio_match.group(1)) if saturation_ratio_match else None
+
+    throughput_rate_match = re.search(r'Request throughput \(req/s\):\s*([0-9.]+)', content)
+    throughput_rate = float(throughput_rate_match.group(1)) if throughput_rate_match else None
+
     return {
         'ttfts': ttfts,
         'tpots': tpots,
         'e2es': e2es,
-        'duration': benchmark_duration
+        'duration': benchmark_duration,
+        'ttft_mean': ttft_mean,
+        'tpot_mean': tpot_mean,
+        'ttft_median': ttft_median,
+        'tpot_median': tpot_median,
+        'ttft_p99': ttft_p99,
+        'tpot_p99': tpot_p99,
+        'saturation_ratio': saturation_ratio,
+        'throughput_rate': throughput_rate,
     }
 
 def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
@@ -263,7 +349,7 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
     def calculate_mape(actual, predicted):
         """Calculate Mean Absolute Percentage Error"""
         # Avoid division by zero by filtering out very small actual values
-        mask = np.abs(actual) > 1e-10
+        mask = actual > 1e-7
         if np.sum(mask) == 0:
             return float('inf')
         return np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])) * 100
@@ -324,7 +410,44 @@ def calculate_errors(sim_results: Dict, vllm_results: Dict) -> Dict:
         
         # errors['duration_percent_error'] = percent_error
         errors['duration_accuracy'] = duration_accuracy
+
+    if 'ttft_mean' in sim_results and 'ttft_mean' in vllm_results:
+        percent_error_ttft_mean = abs(sim_results['ttft_mean'] - vllm_results['ttft_mean']) / vllm_results['ttft_mean'] * 100
+        errors['ttft_mean_accuracy'] = 100 - percent_error_ttft_mean
+
+    if 'tpot_mean' in sim_results and 'tpot_mean' in vllm_results:
+        percent_error_tpot_mean = abs(sim_results['tpot_mean'] - vllm_results['tpot_mean']) / vllm_results['tpot_mean'] * 100
+        errors['tpot_mean_accuracy'] = 100 - percent_error_tpot_mean
+
+    if 'ttft_median' in sim_results and 'ttft_median' in vllm_results:
+        percent_error_ttft_median = abs(sim_results['ttft_median'] - vllm_results['ttft_median']) / vllm_results['ttft_median'] * 100
+        errors['ttft_median_accuracy'] = 100 - percent_error_ttft_median
+
+    if 'tpot_median' in sim_results and 'tpot_median' in vllm_results:
+        percent_error_tpot_median = abs(sim_results['tpot_median'] - vllm_results['tpot_median']) / vllm_results['tpot_median'] * 100
+        errors['tpot_median_accuracy'] = 100 - percent_error_tpot_median
+
+    if 'ttft_p99' in sim_results and 'ttft_p99' in vllm_results:
+        percent_error_ttft_p99 = abs(sim_results['ttft_p99'] - vllm_results['ttft_p99']) / vllm_results['ttft_p99'] * 100
+        errors['ttft_p99_accuracy'] = 100 - percent_error_ttft_p99
+
+    if 'tpot_p99' in sim_results and 'tpot_p99' in vllm_results:
+        percent_error_tpot_p99 = abs(sim_results['tpot_p99'] - vllm_results['tpot_p99']) / vllm_results['tpot_p99'] * 100
+        errors['tpot_p99_accuracy'] = 100 - percent_error_tpot_p99
     
+    if 'saturation_ratio' in vllm_results:
+        errors['vllm_saturation_ratio'] = vllm_results['saturation_ratio']
+
+    if 'saturation_ratio' in sim_results:
+        errors['sim_saturation_ratio'] = sim_results['saturation_ratio']
+
+    if 'sim_duration' in sim_results:
+        errors['sim_duration'] = sim_results['sim_duration']
+
+    if 'throughput_rate' in vllm_results and 'throughput_rate' in sim_results:
+        percent_error_throughput = abs(sim_results['throughput_rate'] - vllm_results['throughput_rate']) / vllm_results['throughput_rate'] * 100
+        errors['throughput_accuracy'] = 100 - percent_error_throughput
+        
     return errors
 
 import matplotlib.pyplot as plt
