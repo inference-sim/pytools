@@ -6,7 +6,7 @@ import yaml
 from itertools import product
 
 def generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list, 
-                    max_num_batched_tokens_list, long_prefill_token_threshold_list):
+                    max_num_batched_tokens_list, long_prefill_token_threshold_list, models):
     """
     Generate YAML configuration by sweeping over parameter combinations.
     
@@ -26,19 +26,20 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
     exp_counter = 1
     
     # Generate all parameter combinations
-    for num_prompts, request_rate, temperature, dataset, max_num_batched_tokens, long_prefill_token_threshold in product(
+    for num_prompts, request_rate, temperature, dataset, max_num_batched_tokens, long_prefill_token_threshold, model in product(
         num_prompts_list, request_rate_list, temperature_list, datasets_list, 
-        max_num_batched_tokens_list, long_prefill_token_threshold_list
+        max_num_batched_tokens_list, long_prefill_token_threshold_list, models
     ):
-        
+        if long_prefill_token_threshold > max_num_batched_tokens:
+            continue
         # Generate experiment name based on parameters
-        exp_name = f"exp_{num_prompts}p_{request_rate}r_{temperature}t_{dataset['name']}"
+        exp_name = f"exp_{num_prompts}p_{request_rate}r_{temperature}t_{max_num_batched_tokens}mbt_{long_prefill_token_threshold}lpt_{dataset['name']}_{model.replace('/', '_')}"
         
         # Create experiment configuration
         exp_config = {
             'name': exp_name,
             'description': "Basic vLLM performance test",
-            'model': "Qwen/Qwen2.5-0.5B",
+            'model': model,
             'runs': 1,
             'vllm': {
                 'gpu_memory_utilization': 0.9,
@@ -72,18 +73,20 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
 
 def main():
     # Define parameter sweep ranges
-    num_prompts_list = [400]
-    request_rate_list = [4]
+    num_prompts_list = [100, 400, 800, 1600]
+    request_rate_list = [4, 8, 16, 32, 64, 128]
     temperature_list = [0.0]
-    max_num_batched_tokens = [256, 512, 1024, 2048, 4096]
-    long_prefill_token_threshold = [16, 32, 64, 128, 256, 512, 1024]
+    max_num_batched_tokens = [256, 1024, 8192]
+    long_prefill_token_threshold = [16, 256, 1024]
     datasets_list = [
         {'name': 'sharegpt', 'path': 'ShareGPT_V3_unfiltered_cleaned_split.json'},
     ]
+    # models = ['Qwen/Qwen2.5-0.5B', 'google/gemma-2b']
+    models = ['google/gemma-2b']
     
     # Generate configuration
     config = generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list, 
-                             max_num_batched_tokens, long_prefill_token_threshold)
+                             max_num_batched_tokens, long_prefill_token_threshold, models)
     
     # Write to YAML file
     with open('vllm_benchmark_config.yaml', 'w') as f:
