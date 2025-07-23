@@ -5,8 +5,29 @@ Simple tool to run vLLM performance benchmarks with different configurations.
 ## Setup
 
 1. Install vLLM:
+
+For our vllm experiments we made edits to the source code, to gather data for our simulation.
+That is no longer needed and the scripts of this folder can be used independent of vllm.
+
+For latest installation: https://docs.vllm.ai/en/latest/getting_started/installation/gpu.html#create-a-new-python-environment
+
+From source (python only edits):
+``` bash
+git clone https://github.com/vllm-project/vllm.git
+cd vllm
+VLLM_USE_PRECOMPILED=1 pip install --editable .
+```
+
+Compiled install (nvidia gpus) :
 ```bash
-pip install vllm
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+
+# Install vLLM with CUDA 12.8.
+# If you are using pip.
+pip install vllm --extra-index-url https://download.pytorch.org/whl/cu128
+# If you are using uv.
+uv pip install vllm --torch-backend=auto
 ```
 
 2. Copy files to vLLM benchmarks directory:
