@@ -113,6 +113,8 @@ from benchmark_utils import convert_to_pytorch_benchmark_format, write_to_json
 
 MILLISECONDS_TO_SECONDS_CONVERSION = 1000
 
+WRITE_OUTPUT_TOKENS = False
+MODEL_NAME = "Qwen2-7B"  # Default model name, make sure no slashes are present
 
 @dataclass
 class BenchmarkMetrics:
@@ -211,12 +213,9 @@ def calculate_metrics(
     ttfts: list[float] = []
     e2els: list[float] = []
 
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    output_path = Path('./output_tokens/') / f"output_tokens_{len(ttfts)}_{current_time}.json"
     endtimes = []
 
-    with open(output_path, "a") as f:
-        f.write("[\n")
+    output_token_json = "[\n"
 
     for i in range(len(outputs)):
         if outputs[i].success:
@@ -252,26 +251,21 @@ def calculate_metrics(
 
             
             # append the request to the file
-            with open(output_path, "a") as f:
-                if i > 0:
-                    f.write(",\n")
-                f.write(
-                    json.dumps(
+            output_token_json += json.dumps(
+                {
+                    "id": f"request_{i}",
+                    "conversations": [
                         {
-                            "id": f"request_{i}",
-                            "conversations": [
-                                {
-                                    "from": "human",
-                                    "value": input_requests[i].prompt,
-                                },
-                                {
-                                    "from": "gpt",
-                                    "value": outputs[i].generated_text,
-                                },
-                            ],
-                        }
-                    )
-                )
+                            "from": "human",
+                            "value": input_requests[i].prompt,
+                        },
+                        {
+                            "from": "gpt",
+                            "value": outputs[i].generated_text,
+                        },
+                    ],
+                }
+            ) + ",\n"
 
         else:
             actual_output_lens.append(0)
@@ -372,8 +366,15 @@ def calculate_metrics(
         ],
     )
 
-    with open(output_path, "a") as f:
-        f.write("\n]\n")  # Close the JSON array
+    output_token_json += "\n]\n"  # Close the JSON array
+
+    # Write the output tokens to a JSON file
+    if WRITE_OUTPUT_TOKENS:
+        output_tokens_dir = Path(f'./output_tokens/{MODEL_NAME}/')  # Change 'model-name' to your model name
+        output_tokens_dir.mkdir(parents=True, exist_ok=True)
+        output_tokens_path = output_tokens_dir / f"output_tokens_{len(ttfts)}.json"
+        with open(output_tokens_path, "w") as f:
+            f.write(output_token_json)
 
     return metrics, actual_output_lens
 
