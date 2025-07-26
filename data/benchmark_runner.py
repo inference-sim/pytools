@@ -50,17 +50,17 @@ def start_vllm_server(config, run):
     # process = subprocess.Popen(cmd)
     return process
 
-def wait_for_server():
+def wait_for_server(model: str):
     """Wait for vLLM server to be ready"""
-    url = "http://127.0.0.1:8000/health"
+    url = "http://127.0.0.1:8000/v1/models"
     max_attempts = 50  # 60 seconds total
     
     print("Waiting for server to be ready...")
     for attempt in range(max_attempts):
         try:
             response = requests.get(url, timeout=5)
-            if response.status_code == 200:
-                print("Server is ready!")
+            if model in str(response.json()):
+                print("Server is ready")
                 return True
         except requests.exceptions.RequestException:
             pass
@@ -124,6 +124,8 @@ def stop_vllm_server(process):
     except subprocess.TimeoutExpired:
         process.kill()
         process.wait()
+    # kill all vllm processes as a safety measure
+    os.system("pkill -f vllm")
     print("Server stopped")
 
 def save_results(outputs, config, config_file, output_folder):
@@ -186,7 +188,7 @@ def main():
             curr_run += 1
             try:
                 # Wait for server
-                if not wait_for_server():
+                if not wait_for_server(params['model']):
                     print("Skipping this run due to server startup failure")
                     continue
                 

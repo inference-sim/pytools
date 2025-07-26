@@ -82,7 +82,7 @@ def main():
         {'name': 'sharegpt', 'path': 'ShareGPT_V3_unfiltered_cleaned_split.json'},
     ]
     # models = ['Qwen/Qwen2.5-0.5B', 'google/gemma-2b']
-    models = ['google/gemma-2b']
+    models = ['Qwen/Qwen2-7B']
     
     # Generate configuration
     config = generate_config(num_prompts_list, request_rate_list, temperature_list, datasets_list, 
