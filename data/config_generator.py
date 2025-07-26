@@ -73,8 +73,8 @@ def generate_config(num_prompts_list, request_rate_list, temperature_list, datas
 
 def main():
     # Define parameter sweep ranges
-    num_prompts_list = [100, 400, 800, 1000]
-    request_rate_list = [4, 8, 16, 32, 64]
+    num_prompts_list = [100, 400, 800, 1600]
+    request_rate_list = [4, 8, 16, 32, 64, 128]
     temperature_list = [0.0]
     max_num_batched_tokens = [256, 1024, 8192]
     long_prefill_token_threshold = [16, 256, 1024]
